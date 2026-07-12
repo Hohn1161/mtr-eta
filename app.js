@@ -1,10 +1,12 @@
 const API_URL = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php';
-const LINE = 'TML';
-const STATION = 'AUS';
-const STATION_KEY = `${LINE}-${STATION}`;
-const REFRESH_INTERVAL = 30000; // 30 seconds
+const MAX_TRAINS = 2;
+const REFRESH_INTERVAL = 30000;
 
-// Station name mappings for display
+const STATIONS = [
+    { line: 'TML', code: 'AUS', name: 'Austin', prefix: 'tml' },
+    { line: 'TCL', code: 'NAC', name: 'Nam Cheong', prefix: 'tcl' }
+];
+
 const STATION_NAMES = {
     WKS: 'Wu Kai Sha', MOS: 'Ma On Shan', HEO: 'Heng On',
     TSH: 'Tai Shui Hang', SHM: 'Shek Mun', CIO: 'City One',
@@ -14,116 +16,106 @@ const STATION_NAMES = {
     HUH: 'Hung Hom', ETS: 'East Tsim Sha Tsui', AUS: 'Austin',
     NAC: 'Nam Cheong', MEF: 'Mei Foo', TWW: 'Tsuen Wan West',
     KSR: 'Kam Sheung Road', YUL: 'Yuen Long', LOP: 'Long Ping',
-    TIS: 'Tin Shui Wai', SIH: 'Siu Hong', TUM: 'Tuen Mun'
+    TIS: 'Tin Shui Wai', SIH: 'Siu Hong', TUM: 'Tuen Mun',
+    HOK: 'Hong Kong', KOW: 'Kowloon', TSY: 'Tsing Yi',
+    AIR: 'Airport', AWE: 'AsiaWorld Expo', OLY: 'Olympic',
+    LAK: 'Lai King', SUN: 'Sunny Bay', TUC: 'Tung Chung'
 };
 
-// DOM Elements
-const elements = {
-    currentTime: document.getElementById('currentTime'),
-    statusDot: document.getElementById('statusDot'),
-    delayBanner: document.getElementById('delayBanner'),
-    delayMessage: document.getElementById('delayMessage'),
-    upTrains: document.getElementById('upTrains'),
-    downTrains: document.getElementById('downTrains'),
-    upPlatform: document.getElementById('upPlatform'),
-    downPlatform: document.getElementById('downPlatform'),
-    refreshBtn: document.getElementById('refreshBtn'),
-    lastUpdate: document.getElementById('lastUpdate')
-};
-
-let refreshTimer = null;
 let isRefreshing = false;
 
-// Initialize the app
 function init() {
     updateTime();
     setInterval(updateTime, 1000);
-    fetchETA();
+    fetchAll();
 
-    elements.refreshBtn.addEventListener('click', () => {
-        if (!isRefreshing) fetchETA();
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        if (!isRefreshing) fetchAll();
     });
 
-    // Auto-refresh
-    refreshTimer = setInterval(fetchETA, REFRESH_INTERVAL);
+    setInterval(fetchAll, REFRESH_INTERVAL);
 
-    // Register service worker for PWA
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 }
 
 function updateTime() {
-    const now = new Date();
-    elements.currentTime.textContent = now.toLocaleTimeString('en-HK', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
+    const now = new Date().toLocaleTimeString('en-HK', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
+    document.getElementById('tmlTime').textContent = now;
+    document.getElementById('tclTime').textContent = now;
 }
 
-async function fetchETA() {
+async function fetchAll() {
     if (isRefreshing) return;
     isRefreshing = true;
 
-    elements.refreshBtn.classList.add('spinning');
-    elements.statusDot.classList.remove('error');
+    document.getElementById('refreshBtn').classList.add('spinning');
 
     try {
-        const response = await fetch(`${API_URL}?line=${LINE}&sta=${STATION}&lang=EN`);
-        const data = await response.json();
+        await Promise.all(STATIONS.map(s => fetchStation(s)));
+    } catch (e) {
+        console.error(e);
+    } finally {
+        isRefreshing = false;
+        document.getElementById('refreshBtn').classList.remove('spinning');
+    }
+}
+
+async function fetchStation(station) {
+    const { line, code, prefix } = station;
+    const stationKey = `${line}-${code}`;
+
+    try {
+        const res = await fetch(`${API_URL}?line=${line}&sta=${code}&lang=EN`);
+        const data = await res.json();
+
+        const dot = document.getElementById(`${prefix}Dot`);
+        dot.classList.remove('error');
 
         if (data.status === 0) {
-            showSpecialService(data.message || data.url);
+            showSpecialService(prefix, data.message || data.url);
             return;
         }
 
         if (data.isdelay === 'Y') {
-            showDelay();
-        } else {
-            hideDelay();
+            dot.classList.add('error');
         }
 
-        const stationData = data.data?.[STATION_KEY];
-
+        const stationData = data.data?.[stationKey];
         if (!stationData) {
-            showNoData();
+            showNoData(prefix);
             return;
         }
 
-        renderTrains('up', stationData.UP);
-        renderTrains('down', stationData.DOWN);
-
-        elements.lastUpdate.textContent = `Updated ${formatTime(data.curr_time)}`;
+        renderTrains(prefix, 'Up', stationData.UP);
+        renderTrains(prefix, 'Down', stationData.DOWN);
+        document.getElementById('lastUpdate').textContent = `Updated ${formatTime(data.curr_time)}`;
 
     } catch (error) {
-        console.error('Fetch error:', error);
-        elements.statusDot.classList.add('error');
-        showError();
-    } finally {
-        isRefreshing = false;
-        elements.refreshBtn.classList.remove('spinning');
+        console.error(`Fetch error for ${code}:`, error);
+        document.getElementById(`${prefix}Dot`).classList.add('error');
+        showError(prefix);
     }
 }
 
-function renderTrains(direction, trains) {
-    const container = direction === 'up' ? elements.upTrains : elements.downTrains;
-    const platformEl = direction === 'up' ? elements.upPlatform : elements.downPlatform;
+function renderTrains(prefix, direction, trains) {
+    const container = document.getElementById(`${prefix}${direction}Trains`);
+    const platformEl = document.getElementById(`${prefix}${direction}Platform`);
 
     if (!trains || trains.length === 0) {
-        container.innerHTML = `
-            <div class="train-row no-data">
-                <span>No upcoming trains</span>
-            </div>`;
+        container.innerHTML = '<div class="train-row no-data"><span>No upcoming trains</span></div>';
         platformEl.textContent = '-';
         return;
     }
 
-    // Use first train's platform as reference
     platformEl.textContent = `Plat ${trains[0].plat}`;
 
-    container.innerHTML = trains.map((train, i) => {
+    const displayTrains = trains.slice(0, MAX_TRAINS);
+
+    container.innerHTML = displayTrains.map((train, i) => {
         const destName = STATION_NAMES[train.dest] || train.dest;
         const etaSeconds = parseTimeDiff(train.time);
         const countdown = Math.max(0, Math.round(etaSeconds / 60));
@@ -136,14 +128,12 @@ function renderTrains(direction, trains) {
 
         return `
             <div class="train-row" style="animation-delay: ${i * 50}ms">
-                <div class="eta-countdown ${countdownClass}">
-                    ${isArriving ? '<1' : countdown}
-                </div>
+                <div class="eta-countdown ${countdownClass}">${isArriving ? '<1' : countdown}</div>
                 <div class="train-details">
                     <div class="train-dest">${destName}</div>
                     <div class="train-time">${formatTrainTime(train.time)}</div>
                 </div>
-                <div class="train-min">${isArriving ? 'min' : `${countdown} min`}</div>
+                <div class="train-min">${isArriving ? 'min' : countdown + ' min'}</div>
             </div>`;
     }).join('');
 }
@@ -156,57 +146,31 @@ function parseTimeDiff(timeStr) {
 function formatTrainTime(timeStr) {
     if (!timeStr || timeStr === '-') return '--:--';
     const date = new Date(timeStr.replace(' ', 'T') + '+08:00');
-    return date.toLocaleTimeString('en-HK', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    });
+    return date.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
 function formatTime(timeStr) {
     if (!timeStr || timeStr === '-') return '';
     const date = new Date(timeStr.replace(' ', 'T') + '+08:00');
-    return date.toLocaleTimeString('en-HK', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    });
+    return date.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-function showDelay() {
-    elements.delayBanner.classList.remove('hidden');
-    elements.delayMessage.textContent = 'Service may be delayed';
+function showSpecialService(prefix, message) {
+    document.getElementById(`${prefix}UpTrains`).innerHTML =
+        `<div class="train-row no-data"><span>${message || 'Special service arrangement'}</span></div>`;
+    document.getElementById(`${prefix}DownTrains`).innerHTML = '';
 }
 
-function hideDelay() {
-    elements.delayBanner.classList.add('hidden');
+function showNoData(prefix) {
+    const html = '<div class="train-row no-data"><span>No schedule data available</span></div>';
+    document.getElementById(`${prefix}UpTrains`).innerHTML = html;
+    document.getElementById(`${prefix}DownTrains`).innerHTML = html;
 }
 
-function showSpecialService(message) {
-    elements.upTrains.innerHTML = `
-        <div class="train-row no-data">
-            <span>⚠️ ${message || 'Special service arrangement'}</span>
-        </div>`;
-    elements.downTrains.innerHTML = '';
+function showError(prefix) {
+    const html = '<div class="train-row no-data"><span>Connection error. Tap to retry.</span></div>';
+    document.getElementById(`${prefix}UpTrains`).innerHTML = html;
+    document.getElementById(`${prefix}DownTrains`).innerHTML = html;
 }
 
-function showNoData() {
-    const noDataHtml = `
-        <div class="train-row no-data">
-            <span>No schedule data available</span>
-        </div>`;
-    elements.upTrains.innerHTML = noDataHtml;
-    elements.downTrains.innerHTML = noDataHtml;
-}
-
-function showError() {
-    const errorHtml = `
-        <div class="train-row no-data">
-            <span>Connection error. Tap to retry.</span>
-        </div>`;
-    elements.upTrains.innerHTML = errorHtml;
-    elements.downTrains.innerHTML = errorHtml;
-}
-
-// Start the app
 init();

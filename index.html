@@ -3,65 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#8B0000">
+    <meta name="theme-color" content="#8B5E3C">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>MTR ETA - Austin</title>
+    <title>MTR ETA</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚇</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
-        <header>
-            <div class="station-info">
-                <div class="line-badge">TML</div>
-                <h1>Austin</h1>
+        <!-- Austin Station - TML -->
+        <div class="station-card" id="tmlCard">
+            <div class="station-card-header">
+                <div class="line-badge tml">TML</div>
+                <h1 class="station-name">Austin</h1>
                 <span class="station-code">AUS</span>
             </div>
             <div class="status-bar">
-                <span id="currentTime" class="current-time"></span>
-                <span id="statusDot" class="status-dot"></span>
+                <span class="current-time" id="tmlTime"></span>
+                <span class="status-dot" id="tmlDot"></span>
             </div>
-        </header>
+        </div>
+        <div class="directions" id="tmlDirections">
+            <section class="direction" id="tmlUp">
+                <div class="direction-header">
+                    <span class="direction-label">→ Tuen Mun</span>
+                    <span class="platform-badge" id="tmlUpPlatform">-</span>
+                </div>
+                <div class="train-list" id="tmlUpTrains">
+                    <div class="train-row loading"><span>Loading...</span></div>
+                </div>
+            </section>
+            <section class="direction" id="tmlDown">
+                <div class="direction-header">
+                    <span class="direction-label">→ Wu Kai Sha</span>
+                    <span class="platform-badge" id="tmlDownPlatform">-</span>
+                </div>
+                <div class="train-list" id="tmlDownTrains">
+                    <div class="train-row loading"><span>Loading...</span></div>
+                </div>
+            </section>
+        </div>
 
-        <main>
-            <div id="delayBanner" class="delay-banner hidden">
-                ⚠️ <span id="delayMessage">Service disruption</span>
+        <div class="divider"></div>
+
+        <!-- Nam Cheong Station - TCL -->
+        <div class="station-card" id="tclCard">
+            <div class="station-card-header">
+                <div class="line-badge tcl">TCL</div>
+                <h1 class="station-name">Nam Cheong</h1>
+                <span class="station-code">NAC</span>
             </div>
-
-            <div class="directions">
-                <section class="direction" id="upDirection">
-                    <div class="direction-header">
-                        <span class="direction-label">→ Tuen Mun</span>
-                        <span class="platform-badge" id="upPlatform">-</span>
-                    </div>
-                    <div class="train-list" id="upTrains">
-                        <div class="train-row loading">
-                            <span class="time-text">Loading...</span>
-                        </div>
-                    </div>
-                </section>
-
-                <div class="divider"></div>
-
-                <section class="direction" id="downDirection">
-                    <div class="direction-header">
-                        <span class="direction-label">→ Wu Kai Sha</span>
-                        <span class="platform-badge" id="downPlatform">-</span>
-                    </div>
-                    <div class="train-list" id="downTrains">
-                        <div class="train-row loading">
-                            <span class="time-text">Loading...</span>
-                        </div>
-                    </div>
-                </section>
+            <div class="status-bar">
+                <span class="current-time" id="tclTime"></span>
+                <span class="status-dot" id="tclDot"></span>
             </div>
-        </main>
+        </div>
+        <div class="directions" id="tclDirections">
+            <section class="direction" id="tclUp">
+                <div class="direction-header">
+                    <span class="direction-label">→ Tung Chung</span>
+                    <span class="platform-badge" id="tclUpPlatform">-</span>
+                </div>
+                <div class="train-list" id="tclUpTrains">
+                    <div class="train-row loading"><span>Loading...</span></div>
+                </div>
+            </section>
+            <section class="direction" id="tclDown">
+                <div class="direction-header">
+                    <span class="direction-label">→ Hong Kong</span>
+                    <span class="platform-badge" id="tclDownPlatform">-</span>
+                </div>
+                <div class="train-list" id="tclDownTrains">
+                    <div class="train-row loading"><span>Loading...</span></div>
+                </div>
+            </section>
+        </div>
 
         <footer>
             <button id="refreshBtn" class="refresh-btn" aria-label="Refresh">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                     <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                 </svg>
             </button>

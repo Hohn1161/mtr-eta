@@ -5,15 +5,17 @@
 }
 
 :root {
-    --tml-color: #9B2335;
-    --tml-light: #C41E3A;
-    --up-color: #1E88E5;
-    --down-color: #43A047;
-    --bg-dark: #1a1a2e;
-    --bg-card: #16213e;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --border-color: #2a2a4a;
+    --tml-color: #8B5E3C;
+    --tml-light: #A0724A;
+    --tcl-color: #00A6CE;
+    --tcl-light: #00C4E8;
+    --up-color: #D4A574;
+    --down-color: #8B5E3C;
+    --bg-dark: #1C1612;
+    --bg-card: #2A1F18;
+    --text-primary: #F5E6D3;
+    --text-secondary: #A89080;
+    --border-color: #3D2E24;
 }
 
 body {
@@ -33,36 +35,48 @@ body {
     flex-direction: column;
 }
 
-header {
-    background: linear-gradient(135deg, var(--tml-color) 0%, var(--tml-light) 100%);
+.station-card {
     padding: 20px;
+    padding-top: 16px;
+}
+
+.station-card:first-child {
     padding-top: env(safe-area-inset-top, 20px);
 }
 
-.station-info {
+.station-card-header {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-bottom: 12px;
 }
 
 .line-badge {
-    background: rgba(255, 255, 255, 0.2);
     padding: 6px 12px;
     border-radius: 6px;
     font-weight: 700;
     font-size: 14px;
     letter-spacing: 1px;
+    color: white;
 }
 
-h1 {
-    font-size: 28px;
+.line-badge.tml {
+    background: var(--tml-color);
+}
+
+.line-badge.tcl {
+    background: var(--tcl-color);
+}
+
+.station-name {
+    font-size: 24px;
     font-weight: 700;
     flex: 1;
 }
 
 .station-code {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
@@ -70,14 +84,13 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 12px;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
 .status-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: #4CAF50;
     animation: pulse 2s infinite;
@@ -93,30 +106,11 @@ h1 {
     50% { opacity: 0.5; }
 }
 
-main {
-    flex: 1;
-    padding: 16px;
-    overflow-y: auto;
-}
-
-.delay-banner {
-    background: #ff9800;
-    color: #000;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-weight: 500;
-    font-size: 14px;
-}
-
-.delay-banner.hidden {
-    display: none;
-}
-
 .directions {
+    padding: 0 16px 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .direction {
@@ -129,41 +123,31 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 16px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--border-color);
 }
 
 .direction-label {
     font-weight: 600;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .platform-badge {
     background: var(--border-color);
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 
-#upDirection .platform-badge {
-    background: rgba(30, 136, 229, 0.3);
-    color: var(--up-color);
-}
-
-#downDirection .platform-badge {
-    background: rgba(67, 160, 71, 0.3);
-    color: var(--down-color);
-}
-
 .train-list {
-    padding: 8px 0;
+    padding: 4px 0;
 }
 
 .train-row {
     display: flex;
     align-items: center;
-    padding: 14px 16px;
+    padding: 12px 14px;
     transition: background 0.2s;
 }
 
@@ -171,37 +155,32 @@ main {
     background: rgba(255, 255, 255, 0.03);
 }
 
-.train-row.loading {
+.train-row.loading, .train-row.no-data {
     justify-content: center;
     color: var(--text-secondary);
-}
-
-.train-row.no-data {
-    justify-content: center;
-    color: var(--text-secondary);
-    padding: 24px 16px;
+    padding: 20px 14px;
 }
 
 .eta-countdown {
-    width: 52px;
-    height: 52px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
-    margin-right: 14px;
+    margin-right: 12px;
     flex-shrink: 0;
 }
 
 .eta-countdown.arriving {
-    background: #f44336;
+    background: #D32F2F;
     animation: pulse-countdown 1s infinite;
 }
 
 .eta-countdown.soon {
-    background: #ff9800;
+    background: #E67E22;
 }
 
 .eta-countdown.normal {
@@ -220,52 +199,53 @@ main {
 
 .train-dest {
     font-weight: 600;
-    font-size: 15px;
-    margin-bottom: 4px;
+    font-size: 14px;
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .train-time {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-secondary);
 }
 
 .train-min {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-secondary);
     text-align: right;
     flex-shrink: 0;
-    margin-left: 12px;
+    margin-left: 10px;
+}
+
+.divider {
+    height: 8px;
+    background: var(--bg-dark);
 }
 
 footer {
-    padding: 16px;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     border-top: 1px solid var(--border-color);
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
 }
 
 .refresh-btn {
     background: var(--tml-color);
     border: none;
     border-radius: 50%;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     cursor: pointer;
     transition: transform 0.2s, background 0.2s;
-}
-
-.refresh-btn:hover {
-    background: var(--tml-light);
 }
 
 .refresh-btn:active {
@@ -282,27 +262,19 @@ footer {
 }
 
 .last-update {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-secondary);
 }
 
-/* Responsive tweaks */
-@media (max-width: 360px) {
-    h1 { font-size: 24px; }
-    .eta-countdown { width: 46px; height: 46px; font-size: 18px; }
-}
-
-/* Animations for train rows */
 .train-row {
     animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Touch feedback */
 .train-row:active {
     background: rgba(255, 255, 255, 0.05);
 }
