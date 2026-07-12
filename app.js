@@ -80,7 +80,6 @@ function renderConfig() {
                     <span class="station-code">${s.code}</span>
                 </div>
                 <div class="status-bar">
-                    <span class="current-time" id="${lineClass}Time"></span>
                     <span class="status-dot" id="${lineClass}Dot"></span>
                 </div>
             </div>
@@ -88,18 +87,14 @@ function renderConfig() {
             ${i < stations.length - 1 ? '<div class="divider"></div>' : ''}
         `;
     }).join('');
-
-    updateTime();
 }
 
 function updateTime() {
     const now = new Date().toLocaleTimeString('en-HK', {
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
-    CONFIGS[currentConfig].forEach(s => {
-        const el = document.getElementById(`${s.line.toLowerCase()}Time`);
-        if (el) el.textContent = now;
-    });
+    const el = document.getElementById('topTime');
+    if (el) el.textContent = now;
 }
 
 async function fetchAll() {
@@ -177,11 +172,12 @@ function renderTrains(id, trains) {
         const etaSeconds = parseTimeDiff(train.time);
         const countdown = Math.max(0, Math.round(etaSeconds / 60));
         const isArriving = countdown <= 1;
-        const isSoon = countdown <= 3;
 
-        let cls = 'normal';
+        let cls = 'green';
+        if (countdown <= 4) cls = 'red';
+        else if (countdown === 5) cls = 'orange';
+
         if (isArriving) cls = 'arriving';
-        else if (isSoon) cls = 'soon';
 
         return `
             <div class="train-row" style="animation-delay:${i * 50}ms">

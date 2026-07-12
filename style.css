@@ -33,23 +33,28 @@ body {
     flex-direction: column;
 }
 
-.config-bar {
+.top-bar {
     background: var(--bg-card);
     padding: 12px 16px;
     padding-top: env(safe-area-inset-top, 12px);
     border-bottom: 1px solid var(--border-color);
 }
 
-.config-label {
-    font-size: 11px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
+.config-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.config-row .current-time {
+    font-size: 18px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
 }
 
 .config-select {
-    width: 100%;
+    flex: 1;
     background: var(--bg-dark);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
@@ -189,8 +194,9 @@ body {
 }
 
 .eta-countdown.arriving { background: #D32F2F; animation: pulse-countdown 1s infinite; }
-.eta-countdown.soon { background: #E67E22; }
-.eta-countdown.normal { background: var(--border-color); }
+.eta-countdown.red { background: #D32F2F; }
+.eta-countdown.orange { background: #E67E22; }
+.eta-countdown.green { background: #2E7D32; }
 
 @keyframes pulse-countdown {
     0%, 100% { transform: scale(1); }

@@ -13,12 +13,14 @@
 </head>
 <body>
     <div class="app">
-        <div class="config-bar">
-            <div class="config-label">Route Config</div>
-            <select id="configSelect" class="config-select">
-                <option value="all">All Stations</option>
-                <option value="work" selected>Work</option>
-            </select>
+        <div class="top-bar">
+            <div class="config-row">
+                <span class="current-time" id="topTime"></span>
+                <select id="configSelect" class="config-select">
+                    <option value="all">All Stations</option>
+                    <option value="work" selected>Work</option>
+                </select>
+            </div>
         </div>
 
         <div id="stationContainer"></div>
