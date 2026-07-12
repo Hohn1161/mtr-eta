@@ -10,14 +10,19 @@ const STATION_NAMES = {
     HUH: 'Hung Hom', DIH: 'Diamond Hill', HOM: 'Ho Man Tin'
 };
 
+const DIRECTION_LABELS = {
+    TML: { up: 'Tuen Mun', down: 'Wu Kai Sha' },
+    TCL: { up: 'Tung Chung', down: 'Hong Kong' }
+};
+
 const CONFIGS = {
     all: [
-        { line: 'TML', code: 'AUS', name: 'Austin', label: 'Tuen Mun', platform: 'up' },
-        { line: 'TCL', code: 'NAC', name: 'Nam Cheong', label: 'Hong Kong', platform: 'down' }
+        { line: 'TML', code: 'AUS', name: 'Austin', directions: ['up', 'down'] },
+        { line: 'TCL', code: 'NAC', name: 'Nam Cheong', directions: ['up', 'down'] }
     ],
     work: [
-        { line: 'TML', code: 'AUS', name: 'Austin', label: 'Tuen Mun', platform: 'up' },
-        { line: 'TCL', code: 'NAC', name: 'Nam Cheong', label: 'Hong Kong', platform: 'down' }
+        { line: 'TML', code: 'AUS', name: 'Austin', directions: ['up'] },
+        { line: 'TCL', code: 'NAC', name: 'Nam Cheong', directions: ['down'] }
     ]
 };
 
@@ -53,6 +58,20 @@ function renderConfig() {
 
     container.innerHTML = stations.map((s, i) => {
         const lineClass = s.line.toLowerCase();
+        const dirHtml = s.directions.map(dir => {
+            const label = DIRECTION_LABELS[s.line]?.[dir] || dir;
+            return `
+                <section class="direction">
+                    <div class="direction-header">
+                        <span class="direction-label">→ ${label}</span>
+                        <span class="platform-badge" id="${lineClass}${dir}Platform">-</span>
+                    </div>
+                    <div class="train-list" id="${lineClass}${dir}Trains">
+                        <div class="train-row loading"><span>Loading...</span></div>
+                    </div>
+                </section>`;
+        }).join('');
+
         return `
             <div class="station-card" id="${lineClass}Card">
                 <div class="station-card-header">
@@ -65,17 +84,7 @@ function renderConfig() {
                     <span class="status-dot" id="${lineClass}Dot"></span>
                 </div>
             </div>
-            <div class="directions" id="${lineClass}Directions">
-                <section class="direction" id="${lineClass}Dir">
-                    <div class="direction-header">
-                        <span class="direction-label">→ ${s.label}</span>
-                        <span class="platform-badge" id="${lineClass}Platform">-</span>
-                    </div>
-                    <div class="train-list" id="${lineClass}Trains">
-                        <div class="train-row loading"><span>Loading...</span></div>
-                    </div>
-                </section>
-            </div>
+            <div class="directions" id="${lineClass}Directions">${dirHtml}</div>
             ${i < stations.length - 1 ? '<div class="divider"></div>' : ''}
         `;
     }).join('');
@@ -87,8 +96,7 @@ function updateTime() {
     const now = new Date().toLocaleTimeString('en-HK', {
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
-    const stations = CONFIGS[currentConfig];
-    stations.forEach(s => {
+    CONFIGS[currentConfig].forEach(s => {
         const el = document.getElementById(`${s.line.toLowerCase()}Time`);
         if (el) el.textContent = now;
     });
@@ -101,8 +109,7 @@ async function fetchAll() {
     document.getElementById('refreshBtn').classList.add('spinning');
 
     try {
-        const stations = CONFIGS[currentConfig];
-        await Promise.all(stations.map(s => fetchStation(s)));
+        await Promise.all(CONFIGS[currentConfig].map(s => fetchStation(s)));
     } catch (e) {
         console.error(e);
     } finally {
@@ -112,7 +119,7 @@ async function fetchAll() {
 }
 
 async function fetchStation(station) {
-    const { line, code, platform } = station;
+    const { line, code, directions } = station;
     const prefix = line.toLowerCase();
     const stationKey = `${line}-${code}`;
 
@@ -124,7 +131,7 @@ async function fetchStation(station) {
         dot.classList.remove('error');
 
         if (data.status === 0) {
-            showSpecial(prefix, data.message);
+            directions.forEach(dir => showSpecial(`${prefix}${dir}`, data.message));
             return;
         }
 
@@ -134,24 +141,27 @@ async function fetchStation(station) {
 
         const stationData = data.data?.[stationKey];
         if (!stationData) {
-            showNoData(prefix);
+            directions.forEach(dir => showNoData(`${prefix}${dir}`));
             return;
         }
 
-        const trains = platform === 'up' ? stationData.UP : stationData.DOWN;
-        renderTrains(prefix, trains);
+        directions.forEach(dir => {
+            const trains = dir === 'up' ? stationData.UP : stationData.DOWN;
+            renderTrains(`${prefix}${dir}`, trains);
+        });
+
         document.getElementById('lastUpdate').textContent = `Updated ${formatTime(data.curr_time)}`;
 
     } catch (error) {
         console.error(`Fetch error for ${code}:`, error);
         document.getElementById(`${prefix}Dot`).classList.add('error');
-        showError(prefix);
+        directions.forEach(dir => showError(`${prefix}${dir}`));
     }
 }
 
-function renderTrains(prefix, trains) {
-    const container = document.getElementById(`${prefix}Trains`);
-    const platformEl = document.getElementById(`${prefix}Platform`);
+function renderTrains(id, trains) {
+    const container = document.getElementById(`${id}Trains`);
+    const platformEl = document.getElementById(`${id}Platform`);
 
     if (!trains || trains.length === 0) {
         container.innerHTML = '<div class="train-row no-data"><span>No upcoming trains</span></div>';
@@ -202,21 +212,19 @@ function formatTime(timeStr) {
     return date.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-function showSpecial(prefix, message) {
-    const el = document.getElementById(`${prefix}Trains`);
+function showSpecial(id, message) {
+    const el = document.getElementById(`${id}Trains`);
     if (el) el.innerHTML = `<div class="train-row no-data"><span>${message || 'Special service arrangement'}</span></div>`;
 }
 
-function showNoData(prefix) {
-    const html = '<div class="train-row no-data"><span>No schedule data</span></div>';
-    const el = document.getElementById(`${prefix}Trains`);
-    if (el) el.innerHTML = html;
+function showNoData(id) {
+    const el = document.getElementById(`${id}Trains`);
+    if (el) el.innerHTML = '<div class="train-row no-data"><span>No schedule data</span></div>';
 }
 
-function showError(prefix) {
-    const html = '<div class="train-row no-data"><span>Connection error</span></div>';
-    const el = document.getElementById(`${prefix}Trains`);
-    if (el) el.innerHTML = html;
+function showError(id) {
+    const el = document.getElementById(`${id}Trains`);
+    if (el) el.innerHTML = '<div class="train-row no-data"><span>Connection error</span></div>';
 }
 
 init();
