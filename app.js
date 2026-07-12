@@ -2,32 +2,39 @@ const API_URL = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php';
 const MAX_TRAINS = 2;
 const REFRESH_INTERVAL = 30000;
 
-const STATIONS = [
-    { line: 'TML', code: 'AUS', name: 'Austin', prefix: 'tml' },
-    { line: 'TCL', code: 'NAC', name: 'Nam Cheong', prefix: 'tcl' }
-];
-
 const STATION_NAMES = {
-    WKS: 'Wu Kai Sha', MOS: 'Ma On Shan', HEO: 'Heng On',
-    TSH: 'Tai Shui Hang', SHM: 'Shek Mun', CIO: 'City One',
-    STW: 'Sha Tin Wai', CKT: 'Che Kung Temple', TAW: 'Tai Wai',
-    HIK: 'Hin Keng', DIH: 'Diamond Hill', KAT: 'Kai Tak',
-    SUW: 'Sung Wong Toi', TKW: 'To Kwa Wan', HOM: 'Ho Man Tin',
-    HUH: 'Hung Hom', ETS: 'East Tsim Sha Tsui', AUS: 'Austin',
-    NAC: 'Nam Cheong', MEF: 'Mei Foo', TWW: 'Tsuen Wan West',
-    KSR: 'Kam Sheung Road', YUL: 'Yuen Long', LOP: 'Long Ping',
-    TIS: 'Tin Shui Wai', SIH: 'Siu Hong', TUM: 'Tuen Mun',
-    HOK: 'Hong Kong', KOW: 'Kowloon', TSY: 'Tsing Yi',
-    AIR: 'Airport', AWE: 'AsiaWorld Expo', OLY: 'Olympic',
-    LAK: 'Lai King', SUN: 'Sunny Bay', TUC: 'Tung Chung'
+    WKS: 'Wu Kai Sha', TUM: 'Tuen Mun', HOK: 'Hong Kong',
+    KOW: 'Kowloon', TSY: 'Tsing Yi', AIR: 'Airport',
+    OLY: 'Olympic', NAC: 'Nam Cheong', LAK: 'Lai King',
+    SUN: 'Sunny Bay', TUC: 'Tung Chung', AUS: 'Austin',
+    HUH: 'Hung Hom', DIH: 'Diamond Hill', HOM: 'Ho Man Tin'
 };
 
+const CONFIGS = {
+    all: [
+        { line: 'TML', code: 'AUS', name: 'Austin', label: 'Tuen Mun', platform: 'up' },
+        { line: 'TCL', code: 'NAC', name: 'Nam Cheong', label: 'Hong Kong', platform: 'down' }
+    ],
+    work: [
+        { line: 'TML', code: 'AUS', name: 'Austin', label: 'Tuen Mun', platform: 'up' },
+        { line: 'TCL', code: 'NAC', name: 'Nam Cheong', label: 'Hong Kong', platform: 'down' }
+    ]
+};
+
+let currentConfig = 'work';
 let isRefreshing = false;
 
 function init() {
+    renderConfig();
     updateTime();
     setInterval(updateTime, 1000);
     fetchAll();
+
+    document.getElementById('configSelect').addEventListener('change', (e) => {
+        currentConfig = e.target.value;
+        renderConfig();
+        fetchAll();
+    });
 
     document.getElementById('refreshBtn').addEventListener('click', () => {
         if (!isRefreshing) fetchAll();
@@ -40,12 +47,51 @@ function init() {
     }
 }
 
+function renderConfig() {
+    const container = document.getElementById('stationContainer');
+    const stations = CONFIGS[currentConfig];
+
+    container.innerHTML = stations.map((s, i) => {
+        const lineClass = s.line.toLowerCase();
+        return `
+            <div class="station-card" id="${lineClass}Card">
+                <div class="station-card-header">
+                    <div class="line-badge ${lineClass}">${s.line}</div>
+                    <h1 class="station-name">${s.name}</h1>
+                    <span class="station-code">${s.code}</span>
+                </div>
+                <div class="status-bar">
+                    <span class="current-time" id="${lineClass}Time"></span>
+                    <span class="status-dot" id="${lineClass}Dot"></span>
+                </div>
+            </div>
+            <div class="directions" id="${lineClass}Directions">
+                <section class="direction" id="${lineClass}Dir">
+                    <div class="direction-header">
+                        <span class="direction-label">→ ${s.label}</span>
+                        <span class="platform-badge" id="${lineClass}Platform">-</span>
+                    </div>
+                    <div class="train-list" id="${lineClass}Trains">
+                        <div class="train-row loading"><span>Loading...</span></div>
+                    </div>
+                </section>
+            </div>
+            ${i < stations.length - 1 ? '<div class="divider"></div>' : ''}
+        `;
+    }).join('');
+
+    updateTime();
+}
+
 function updateTime() {
     const now = new Date().toLocaleTimeString('en-HK', {
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
-    document.getElementById('tmlTime').textContent = now;
-    document.getElementById('tclTime').textContent = now;
+    const stations = CONFIGS[currentConfig];
+    stations.forEach(s => {
+        const el = document.getElementById(`${s.line.toLowerCase()}Time`);
+        if (el) el.textContent = now;
+    });
 }
 
 async function fetchAll() {
@@ -55,7 +101,8 @@ async function fetchAll() {
     document.getElementById('refreshBtn').classList.add('spinning');
 
     try {
-        await Promise.all(STATIONS.map(s => fetchStation(s)));
+        const stations = CONFIGS[currentConfig];
+        await Promise.all(stations.map(s => fetchStation(s)));
     } catch (e) {
         console.error(e);
     } finally {
@@ -65,7 +112,8 @@ async function fetchAll() {
 }
 
 async function fetchStation(station) {
-    const { line, code, prefix } = station;
+    const { line, code, platform } = station;
+    const prefix = line.toLowerCase();
     const stationKey = `${line}-${code}`;
 
     try {
@@ -76,7 +124,7 @@ async function fetchStation(station) {
         dot.classList.remove('error');
 
         if (data.status === 0) {
-            showSpecialService(prefix, data.message || data.url);
+            showSpecial(prefix, data.message);
             return;
         }
 
@@ -90,8 +138,8 @@ async function fetchStation(station) {
             return;
         }
 
-        renderTrains(prefix, 'Up', stationData.UP);
-        renderTrains(prefix, 'Down', stationData.DOWN);
+        const trains = platform === 'up' ? stationData.UP : stationData.DOWN;
+        renderTrains(prefix, trains);
         document.getElementById('lastUpdate').textContent = `Updated ${formatTime(data.curr_time)}`;
 
     } catch (error) {
@@ -101,9 +149,9 @@ async function fetchStation(station) {
     }
 }
 
-function renderTrains(prefix, direction, trains) {
-    const container = document.getElementById(`${prefix}${direction}Trains`);
-    const platformEl = document.getElementById(`${prefix}${direction}Platform`);
+function renderTrains(prefix, trains) {
+    const container = document.getElementById(`${prefix}Trains`);
+    const platformEl = document.getElementById(`${prefix}Platform`);
 
     if (!trains || trains.length === 0) {
         container.innerHTML = '<div class="train-row no-data"><span>No upcoming trains</span></div>';
@@ -112,23 +160,22 @@ function renderTrains(prefix, direction, trains) {
     }
 
     platformEl.textContent = `Plat ${trains[0].plat}`;
+    const display = trains.slice(0, MAX_TRAINS);
 
-    const displayTrains = trains.slice(0, MAX_TRAINS);
-
-    container.innerHTML = displayTrains.map((train, i) => {
+    container.innerHTML = display.map((train, i) => {
         const destName = STATION_NAMES[train.dest] || train.dest;
         const etaSeconds = parseTimeDiff(train.time);
         const countdown = Math.max(0, Math.round(etaSeconds / 60));
         const isArriving = countdown <= 1;
         const isSoon = countdown <= 3;
 
-        let countdownClass = 'normal';
-        if (isArriving) countdownClass = 'arriving';
-        else if (isSoon) countdownClass = 'soon';
+        let cls = 'normal';
+        if (isArriving) cls = 'arriving';
+        else if (isSoon) cls = 'soon';
 
         return `
-            <div class="train-row" style="animation-delay: ${i * 50}ms">
-                <div class="eta-countdown ${countdownClass}">${isArriving ? '<1' : countdown}</div>
+            <div class="train-row" style="animation-delay:${i * 50}ms">
+                <div class="eta-countdown ${cls}">${isArriving ? '<1' : countdown}</div>
                 <div class="train-details">
                     <div class="train-dest">${destName}</div>
                     <div class="train-time">${formatTrainTime(train.time)}</div>
@@ -155,22 +202,21 @@ function formatTime(timeStr) {
     return date.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-function showSpecialService(prefix, message) {
-    document.getElementById(`${prefix}UpTrains`).innerHTML =
-        `<div class="train-row no-data"><span>${message || 'Special service arrangement'}</span></div>`;
-    document.getElementById(`${prefix}DownTrains`).innerHTML = '';
+function showSpecial(prefix, message) {
+    const el = document.getElementById(`${prefix}Trains`);
+    if (el) el.innerHTML = `<div class="train-row no-data"><span>${message || 'Special service arrangement'}</span></div>`;
 }
 
 function showNoData(prefix) {
-    const html = '<div class="train-row no-data"><span>No schedule data available</span></div>';
-    document.getElementById(`${prefix}UpTrains`).innerHTML = html;
-    document.getElementById(`${prefix}DownTrains`).innerHTML = html;
+    const html = '<div class="train-row no-data"><span>No schedule data</span></div>';
+    const el = document.getElementById(`${prefix}Trains`);
+    if (el) el.innerHTML = html;
 }
 
 function showError(prefix) {
-    const html = '<div class="train-row no-data"><span>Connection error. Tap to retry.</span></div>';
-    document.getElementById(`${prefix}UpTrains`).innerHTML = html;
-    document.getElementById(`${prefix}DownTrains`).innerHTML = html;
+    const html = '<div class="train-row no-data"><span>Connection error</span></div>';
+    const el = document.getElementById(`${prefix}Trains`);
+    if (el) el.innerHTML = html;
 }
 
 init();

@@ -1,15 +1,15 @@
 {
     "name": "MTR ETA",
     "short_name": "MTR ETA",
-    "description": "Real-time train arrival times for Austin and Nam Cheong stations",
+    "description": "Real-time MTR train arrival times",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#1C1612",
-    "theme_color": "#8B5E3C",
+    "background_color": "#1E1628",
+    "theme_color": "#9B59B6",
     "orientation": "portrait",
     "icons": [
         {
-            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238B5E3C' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🚇</text></svg>",
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%239B59B6' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>🚇</text></svg>",
             "sizes": "any",
             "type": "image/svg+xml"
         }

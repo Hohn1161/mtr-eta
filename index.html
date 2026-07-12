@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#8B5E3C">
+    <meta name="theme-color" content="#9B59B6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>MTR ETA</title>
@@ -13,73 +13,15 @@
 </head>
 <body>
     <div class="app">
-        <!-- Austin Station - TML -->
-        <div class="station-card" id="tmlCard">
-            <div class="station-card-header">
-                <div class="line-badge tml">TML</div>
-                <h1 class="station-name">Austin</h1>
-                <span class="station-code">AUS</span>
-            </div>
-            <div class="status-bar">
-                <span class="current-time" id="tmlTime"></span>
-                <span class="status-dot" id="tmlDot"></span>
-            </div>
-        </div>
-        <div class="directions" id="tmlDirections">
-            <section class="direction" id="tmlUp">
-                <div class="direction-header">
-                    <span class="direction-label">→ Tuen Mun</span>
-                    <span class="platform-badge" id="tmlUpPlatform">-</span>
-                </div>
-                <div class="train-list" id="tmlUpTrains">
-                    <div class="train-row loading"><span>Loading...</span></div>
-                </div>
-            </section>
-            <section class="direction" id="tmlDown">
-                <div class="direction-header">
-                    <span class="direction-label">→ Wu Kai Sha</span>
-                    <span class="platform-badge" id="tmlDownPlatform">-</span>
-                </div>
-                <div class="train-list" id="tmlDownTrains">
-                    <div class="train-row loading"><span>Loading...</span></div>
-                </div>
-            </section>
+        <div class="config-bar">
+            <div class="config-label">Route Config</div>
+            <select id="configSelect" class="config-select">
+                <option value="all">All Stations</option>
+                <option value="work" selected>Work</option>
+            </select>
         </div>
 
-        <div class="divider"></div>
-
-        <!-- Nam Cheong Station - TCL -->
-        <div class="station-card" id="tclCard">
-            <div class="station-card-header">
-                <div class="line-badge tcl">TCL</div>
-                <h1 class="station-name">Nam Cheong</h1>
-                <span class="station-code">NAC</span>
-            </div>
-            <div class="status-bar">
-                <span class="current-time" id="tclTime"></span>
-                <span class="status-dot" id="tclDot"></span>
-            </div>
-        </div>
-        <div class="directions" id="tclDirections">
-            <section class="direction" id="tclUp">
-                <div class="direction-header">
-                    <span class="direction-label">→ Tung Chung</span>
-                    <span class="platform-badge" id="tclUpPlatform">-</span>
-                </div>
-                <div class="train-list" id="tclUpTrains">
-                    <div class="train-row loading"><span>Loading...</span></div>
-                </div>
-            </section>
-            <section class="direction" id="tclDown">
-                <div class="direction-header">
-                    <span class="direction-label">→ Hong Kong</span>
-                    <span class="platform-badge" id="tclDownPlatform">-</span>
-                </div>
-                <div class="train-list" id="tclDownTrains">
-                    <div class="train-row loading"><span>Loading...</span></div>
-                </div>
-            </section>
-        </div>
+        <div id="stationContainer"></div>
 
         <footer>
             <button id="refreshBtn" class="refresh-btn" aria-label="Refresh">
